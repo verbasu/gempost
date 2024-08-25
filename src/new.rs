@@ -6,12 +6,13 @@ use chrono::{Local, SecondsFormat};
 use eyre::{bail, WrapErr};
 use tera::{Context, Tera};
 use uuid::Uuid;
+use titlecase::titlecase;
 
 use crate::error::Error;
 
 const METADATA_TEMPLATE: &str = include_str!("metadata.yaml.tera");
 
-fn generate_metadata_file(template: &str, title: Option<&str>) -> eyre::Result<String> {
+fn generate_metadata_file(template: &str, title: &str) -> eyre::Result<String> {
     let mut tera = Tera::default();
 
     tera.add_raw_template("metadata", template)
@@ -19,7 +20,7 @@ fn generate_metadata_file(template: &str, title: Option<&str>) -> eyre::Result<S
 
     let mut context = Context::new();
     context.insert("id", &format!("urn:uuid:{}", Uuid::new_v4()));
-    context.insert("title", title.unwrap_or_default());
+    context.insert("title", title);
     context.insert(
         "timestamp",
         &Local::now().to_rfc3339_opts(SecondsFormat::Secs, false),
@@ -29,7 +30,7 @@ fn generate_metadata_file(template: &str, title: Option<&str>) -> eyre::Result<S
         .wrap_err("Failed to render new metadata file template. This is a bug.")
 }
 
-pub fn create_new_post(posts_dir: &Path, slug: &str, title: Option<&str>) -> eyre::Result<()> {
+pub fn create_new_post(posts_dir: &Path, slug: &str) -> eyre::Result<()> {
     let gemtext_path = posts_dir.join(format!("{slug}.gmi"));
     let metadata_path = posts_dir.join(format!("{slug}.yaml"));
 
@@ -64,6 +65,10 @@ pub fn create_new_post(posts_dir: &Path, slug: &str, title: Option<&str>) -> eyr
         }
         Err(err) => Err(err).wrap_err("failed creating new post metadata file")?,
     };
+
+    // Can create title from slug
+
+    let title: &String = &titlecase(input: &slug.replace(from: "-", to: " "));
 
     let metadata_file_contents = generate_metadata_file(METADATA_TEMPLATE, title)
         .wrap_err("failed generating contents for new post metadata file")?;
