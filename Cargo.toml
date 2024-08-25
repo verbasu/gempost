@@ -21,6 +21,7 @@ serde = { version = "1.0.195", features = ["derive"] }
 serde_yaml = "0.9.30"
 tera = "1.19.1"
 thiserror = "1.0.56"
+titlecase = "3.3.0"
 url = "2.5.0"
 uuid = { version = "1.7.0", features = ["v4"] }
 
